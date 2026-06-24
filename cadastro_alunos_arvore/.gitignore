@@ -1,0 +1,5 @@
+cadastro_alunos
+cadastro_alunos.exe
+*.o
+*.out
+.vscode/
