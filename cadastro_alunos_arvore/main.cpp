@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <limits>
+#include <algorithm>
+#include <cctype>
 
 using namespace std;
 
@@ -30,6 +32,29 @@ private:
     No* raiz;
     int total;
 
+    // Normaliza o nome para comparar sem diferenciar maiusculas e minusculas
+    string normalizarNome(string nome) {
+        transform(nome.begin(), nome.end(), nome.begin(), [](unsigned char c) {
+            return toupper(c);
+        });
+
+        return nome;
+    }
+
+    // Verifica se uma matricula ja existe na arvore
+    bool matriculaExiste(No* no, int matricula) {
+        if (no == nullptr) {
+            return false;
+        }
+
+        if (no->aluno.matricula == matricula) {
+            return true;
+        }
+
+        return matriculaExiste(no->esquerda, matricula) ||
+               matriculaExiste(no->direita, matricula);
+    }
+
     // Insere um aluno na arvore usando o nome como chave de ordenacao
     No* inserir(No* no, Aluno aluno) {
         if (no == nullptr) {
@@ -37,10 +62,13 @@ private:
             return new No(aluno);
         }
 
-        if (aluno.nome < no->aluno.nome) {
+        string nomeNovo = normalizarNome(aluno.nome);
+        string nomeAtual = normalizarNome(no->aluno.nome);
+
+        if (nomeNovo < nomeAtual) {
             no->esquerda = inserir(no->esquerda, aluno);
         }
-        else if (aluno.nome > no->aluno.nome) {
+        else if (nomeNovo > nomeAtual) {
             no->direita = inserir(no->direita, aluno);
         }
         else {
@@ -52,11 +80,18 @@ private:
 
     // Busca um aluno pelo nome
     No* buscar(No* no, string nome) {
-        if (no == nullptr || no->aluno.nome == nome) {
+        if (no == nullptr) {
+            return nullptr;
+        }
+
+        string nomeBusca = normalizarNome(nome);
+        string nomeAtual = normalizarNome(no->aluno.nome);
+
+        if (nomeBusca == nomeAtual) {
             return no;
         }
 
-        if (nome < no->aluno.nome) {
+        if (nomeBusca < nomeAtual) {
             return buscar(no->esquerda, nome);
         }
 
@@ -79,10 +114,10 @@ private:
         listarEmOrdem(no->direita);
     }
 
-    // Calcula a altura da arvore
+    // Calcula a altura da arvore por arestas
     int altura(No* no) {
         if (no == nullptr) {
-            return 0;
+            return -1;
         }
 
         int alturaEsquerda = altura(no->esquerda);
@@ -118,6 +153,11 @@ public:
 
     // Metodo publico para inserir aluno
     void inserirAluno(int matricula, string nome, string curso) {
+        if (matriculaExiste(raiz, matricula)) {
+            cout << "Matricula ja cadastrada!" << endl;
+            return;
+        }
+
         Aluno aluno;
         aluno.matricula = matricula;
         aluno.nome = nome;
